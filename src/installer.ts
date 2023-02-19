@@ -28,7 +28,7 @@ import { Inputs } from './input';
 
 export class Installer {
     #downloadUrl =
-        'https://github.com/protocolbuffers/protobuf/releases/download/{{VERSION}}/protoc-{{VERSION}}-{{OS}}-{{ARCH}}.zip';
+        'https://github.com/protocolbuffers/protobuf/releases/download/{{VERSION}}/protoc-{{VERSION}}-{{OS}}{{ARCH}}.zip';
 
     #includePrereleases?: boolean;
     #version: string;
@@ -52,7 +52,7 @@ export class Installer {
         if (this.#version === 'latest') {
             versionToUse = (await this._resolveReleasesOfFirstPage()).at(0);
         } else if (this.#version.endsWith('.x')) {
-            versionToUse = (await this._resolveAllVersions()).find((i) => i === this._normalize(this.#version));
+            versionToUse = (await this._resolveReleasesOfFirstPage()).find((i) => i === this._normalize(this.#version));
         } else {
             versionToUse = this.#version;
         }
@@ -105,11 +105,16 @@ export class Installer {
         }
 
         if (os === undefined) throw new Error(`Operating system [${currentOs}] is not supported`);
-        return this.#downloadUrl
+        let url = this.#downloadUrl
             .replace('{{VERSION}}', versionToUse)
             .replace('{{VERSION}}', versionToUse.startsWith('v') ? versionToUse.slice(1) : versionToUse)
-            .replace('{{OS}}', os)
-            .replace('{{ARCH}}', arch);
+            .replace('{{OS}}', os);
+
+        if (!os.startsWith('win')) {
+            url = url.replace('{{ARCH}}', `-${arch}`);
+        }
+
+        return url;
     }
 
     private async _resolveReleasesOfFirstPage() {
@@ -123,46 +128,8 @@ export class Installer {
 
         return (result ?? [])
             .filter((tag) => tag.tag_name.match(/v\d+\.[\w\.]+/g))
-            .filter((tag) =>
-                this.#includePrereleases === true
-                    ? this.#includePrereleases && tag.prerelease
-                    : tag.prerelease === false
-            )
+            .filter((tag) => (this.#includePrereleases === true ? tag.prerelease : tag.prerelease === false))
             .map((tag) => tag.tag_name);
-    }
-
-    private async _resolveAllVersions() {
-        debug('Resolving all versions of protocolbuffers/protoc');
-
-        let more = true;
-        let idx = 1;
-        let releases: string[] = [];
-
-        while (more) {
-            const result = await this.httpClient
-                .getJson<Record<string, any>[]>(
-                    `https://api.github.com/repos/protocolbuffers/protobuf/releases?page=${idx}`
-                )
-                .then((r) => r.result || []);
-
-            if (!result.length) {
-                more = false;
-                break;
-            }
-
-            releases = releases.concat(
-                ...result
-                    .filter((tag) => tag.tag_name.match(/v\d+\.[\w\.]+/g))
-                    .filter((tag) =>
-                        this.#includePrereleases === true
-                            ? this.#includePrereleases && tag.prerelease
-                            : tag.prerelease === false
-                    )
-                    .map((tag) => tag.tag_name)
-            );
-        }
-
-        return releases.sort(rcompare);
     }
 
     private _normalize(version: string) {
