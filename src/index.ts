@@ -37,7 +37,7 @@ async function main() {
         startGroup('installing protoc...');
         {
             info(`Using download URL ${downloadUrl}`);
-            const path = await downloadTool(downloadUrl).then((path) => extractZip(path));
+            const path = await downloadTool(downloadUrl, undefined, inputs.token).then((path) => extractZip(path));
 
             await cacheDir(path, 'protoc', version);
         }
@@ -47,7 +47,7 @@ async function main() {
     }
 
     // Add it to the PATH
-    addPath(toolPath);
+    addPath(`${toolPath}/bin`);
 }
 
 main().catch((ex) => {
