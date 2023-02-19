@@ -1,0 +1,52 @@
+{
+    "name": "@noelware/setup-protoc",
+    "description": "🐻‍❄️🔥 GitHub action for setting up the Protocol Buffers compiler",
+    "version": "1.0.0",
+    "private": true,
+    "main": "./build/action.js",
+    "license": "MIT",
+    "author": "Noelware, LLC. <team@noelware.org>",
+    "repository": "https://github.com/Noelware/setup-protoc",
+    "bugs": "https://github.com/Noelware/setup-protoc/issues/new",
+    "packageManager": "yarn@3.4.1",
+    "keywords": [
+        "setup-protoc",
+        "protobuf",
+        "protoc",
+        "protobuf-compiler"
+    ],
+    "scripts": {
+        "build": "yarn fmt && yarn lint && tsx --tsconfig ./scripts/tsconfig.json scripts/build.ts",
+        "lint": "tsx --tsconfig ./scripts/tsconfig.json scripts/eslint.ts",
+        "test": "vitest run",
+        "fmt": "prettier --config ./.prettierrc.json --write ."
+    },
+    "dependencies": {
+        "@actions/core": "1.10.0",
+        "@actions/exec": "1.1.1",
+        "@actions/http-client": "2.0.1",
+        "@actions/tool-cache": "2.0.1",
+        "semver": "7.3.8"
+    },
+    "devDependencies": {
+        "@augu/eslint-config": "4.0.1",
+        "@augu/tsconfig": "1.1.1",
+        "@types/eslint": "8.21.1",
+        "@types/node": "18.14.0",
+        "@types/prettier": "2.7.2",
+        "@types/semver": "7.3.13",
+        "@types/signale": "1.4.4",
+        "@typescript-eslint/eslint-plugin": "5.52.0",
+        "@typescript-eslint/parser": "5.52.0",
+        "@vercel/ncc": "0.36.1",
+        "eslint": "8.34.0",
+        "eslint-config-prettier": "8.6.0",
+        "log-symbols": "5.1.0",
+        "prettier": "2.8.4",
+        "rimraf": "4.1.2",
+        "signale": "1.4.0",
+        "tsx": "3.12.3",
+        "typescript": "4.9.5",
+        "vitest": "0.28.5"
+    }
+}

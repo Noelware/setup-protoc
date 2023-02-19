@@ -1,0 +1,26 @@
+{
+    "extends": ["prettier", "@augu/eslint-config/ts.js"],
+    "parserOptions": {
+        "project": "./tsconfig.json"
+    },
+    "overrides": [
+        {
+            "files": ["vitest.config.ts"],
+            "parserOptions": {
+                "project": "./tsconfig.eslint.json"
+            }
+        },
+        {
+            "files": ["tests/**/*.{ts,tsx}"],
+            "parserOptions": {
+                "project": "./tests/tsconfig.json"
+            }
+        },
+        {
+            "files": ["scripts/**/*.{ts,tsx}"],
+            "parserOptions": {
+                "project": "./scripts/tsconfig.json"
+            }
+        }
+    ]
+}
