@@ -38,16 +38,14 @@ async function main() {
         startGroup('installing protoc...');
         {
             info(`Using download URL ${downloadUrl}`);
-            toolPath = await downloadTool(downloadUrl, undefined, inputs.token).then((path) => extractZip(path));
+            const path = await downloadTool(downloadUrl, undefined, inputs.token).then((path) => extractZip(path));
 
-            await cacheDir(toolPath, 'protoc', version);
+            toolPath = await cacheDir(path, 'protoc', version);
         }
         endGroup();
     } else {
         info(`Found cached protoc toolchain in directory [${toolPath}]`);
     }
-
-    await getExecOutput(`${toolPath}/protoc`, ['--version']);
 
     // Add it to the PATH
     addPath(toolPath);
