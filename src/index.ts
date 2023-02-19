@@ -21,7 +21,8 @@
  * SOFTWARE.
  */
 
-import { addPath, endGroup, error, info, startGroup } from '@actions/core';
+import { addPath, endGroup, error, info, startGroup, warning } from '@actions/core';
+import { exec, getExecOutput } from '@actions/exec';
 import { downloadTool, find, extractZip, cacheDir } from '@actions/tool-cache';
 import { getInputs } from './input';
 import { Installer } from './installer';
@@ -46,8 +47,29 @@ async function main() {
         info(`Found cached protoc toolchain in directory [${toolPath}]`);
     }
 
+    await getExecOutput(`${toolPath}/protoc`, ['--version']);
+
     // Add it to the PATH
     addPath(toolPath);
+
+    startGroup('Environment');
+    {
+        const { stdout, stderr } = await getExecOutput('protoc', ['--version']);
+        startGroup('stdout');
+        {
+            info(stdout);
+        }
+        endGroup();
+
+        if (stderr.length) {
+            startGroup('stderr');
+            {
+                warning(stderr);
+            }
+            endGroup();
+        }
+    }
+    endGroup();
 }
 
 main().catch((ex) => {
