@@ -48,6 +48,8 @@ export class Installer {
     }
 
     async getVersion() {
+        info(`Resolving version ${this.#version}...`);
+
         let versionToUse: string | undefined;
         if (this.#version === 'latest') {
             versionToUse = (await this._resolveReleasesOfFirstPage()).at(0);
@@ -121,7 +123,11 @@ export class Installer {
 
         return (result ?? [])
             .filter((tag) => tag.tag_name.match(/v\d+\.[\w\.]+/g))
-            .filter((tag) => (this.#includePrereleases !== undefined ? this.#includePrereleases && tag.release : false))
+            .filter((tag) =>
+                this.#includePrereleases === true
+                    ? this.#includePrereleases && tag.prerelease
+                    : tag.prerelease === false
+            )
             .map((tag) => tag.tag_name);
     }
 
@@ -148,7 +154,9 @@ export class Installer {
                 ...result
                     .filter((tag) => tag.tag_name.match(/v\d+\.[\w\.]+/g))
                     .filter((tag) =>
-                        this.#includePrereleases !== undefined ? this.#includePrereleases && tag.release : false
+                        this.#includePrereleases === true
+                            ? this.#includePrereleases && tag.prerelease
+                            : tag.prerelease === false
                     )
                     .map((tag) => tag.tag_name)
             );
