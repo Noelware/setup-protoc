@@ -32,14 +32,14 @@ async function main() {
     const version = await installer.getVersion();
     const downloadUrl = await installer.resolveDownloadUrl();
 
-    const toolPath = find('protoc', version);
+    let toolPath = find('protoc', version);
     if (!toolPath) {
         startGroup('installing protoc...');
         {
             info(`Using download URL ${downloadUrl}`);
-            const path = await downloadTool(downloadUrl, undefined, inputs.token).then((path) => extractZip(path));
+            toolPath = await downloadTool(downloadUrl, undefined, inputs.token).then((path) => extractZip(path));
 
-            await cacheDir(path, 'protoc', version);
+            await cacheDir(toolPath, 'protoc', version);
         }
         endGroup();
     } else {
@@ -47,7 +47,7 @@ async function main() {
     }
 
     // Add it to the PATH
-    addPath(`${toolPath}/bin`);
+    addPath(toolPath);
 }
 
 main().catch((ex) => {
