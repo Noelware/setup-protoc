@@ -1,6 +1,17 @@
 {
-  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:base"
-  ]
+    "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+    "automerge": true,
+    "extends": ["config:base", "default:timezone(America/Phoenix)", "docker:disableMajor"],
+    "vulnerabilityAlerts": {
+        "labels": ["security"]
+    },
+    "java": {
+        "packageRules": [
+            {
+                "matchPackagePatterns": ["^org\\.noelware[.:]"],
+                "matchManagers": ["gradle"],
+                "registryUrls": ["https://maven.noelware.org", "https://maven.noelware.org/snapshots"]
+            }
+        ]
+    }
 }
