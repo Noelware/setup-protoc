@@ -80,3 +80,6 @@ jobs:
               uses: ./
               with:
                   repo-token: ${{secrets.GITHUB_TOKEN}}
+
+            - name: Test action v2
+              run: protoc --version
