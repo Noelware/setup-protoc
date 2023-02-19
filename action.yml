@@ -29,7 +29,7 @@ branding:
 
 runs:
     using: node16
-    main: ./build/index.js
+    main: ./build/action.js
 
 inputs:
     version:
