@@ -48,7 +48,7 @@ async function main() {
     }
 
     // Add it to the PATH
-    addPath(toolPath);
+    addPath(`${toolPath}/bin`);
 
     startGroup('Environment');
     {
