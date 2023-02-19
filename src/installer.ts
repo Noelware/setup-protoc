@@ -128,8 +128,9 @@ export class Installer {
 
         return (result ?? [])
             .filter((tag) => tag.tag_name.match(/v\d+\.[\w\.]+/g))
-            .filter((tag) => (this.#includePrereleases === true ? tag.prerelease : tag.prerelease === false))
-            .map((tag) => tag.tag_name);
+            .filter((tag) => (this.#includePrereleases === true ? true : tag.prerelease === false))
+            .map((tag) => tag.tag_name)
+            .sort(rcompare);
     }
 
     private _normalize(version: string) {
