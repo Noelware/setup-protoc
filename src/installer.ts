@@ -112,6 +112,8 @@ export class Installer {
 
         if (!os.startsWith('win')) {
             url = url.replace('{{ARCH}}', `-${arch}`);
+        } else {
+            url = url.replace('{{ARCH}}', '');
         }
 
         return url;

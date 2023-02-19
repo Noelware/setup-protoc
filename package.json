@@ -1,7 +1,7 @@
 {
     "name": "@noelware/setup-protoc",
     "description": "🐻‍❄️🔥 GitHub action for setting up the Protocol Buffers compiler",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "private": true,
     "main": "./build/action.js",
     "license": "MIT",
