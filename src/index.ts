@@ -53,19 +53,9 @@ async function main() {
     startGroup('Environment');
     {
         const { stdout, stderr } = await getExecOutput('protoc', ['--version']);
-        startGroup('stdout');
-        {
-            info(stdout);
-        }
-        endGroup();
 
-        if (stderr.length) {
-            startGroup('stderr');
-            {
-                warning(stderr);
-            }
-            endGroup();
-        }
+        if (stdout.length) info(stdout);
+        if (stderr.length) warning(stderr);
     }
     endGroup();
 }
