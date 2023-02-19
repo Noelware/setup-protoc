@@ -48,8 +48,6 @@ export class Installer {
     }
 
     async getVersion() {
-        info(`Resolving version ${this.#version}...`);
-
         let versionToUse: string | undefined;
         if (this.#version === 'latest') {
             versionToUse = (await this._resolveReleasesOfFirstPage()).at(0);
@@ -67,8 +65,6 @@ export class Installer {
     }
 
     async resolveDownloadUrl() {
-        info('Resolving download URL...');
-
         const versionToUse = await this.getVersion();
         let os: string | undefined = undefined,
             arch: string | undefined = undefined;
