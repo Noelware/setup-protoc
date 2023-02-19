@@ -28,7 +28,7 @@ import { Inputs } from './input';
 
 export class Installer {
     #downloadUrl =
-        'https://github.com/protocolbuffers/protobuf/releases/download/{{VERSION}}/protoc-{{OS}}-{{ARCH}}.zip';
+        'https://github.com/protocolbuffers/protobuf/releases/download/{{VERSION}}/protoc-{{VERSION}}-{{OS}}-{{ARCH}}.zip';
 
     #includePrereleases?: boolean;
     #version: string;
@@ -109,7 +109,11 @@ export class Installer {
         }
 
         if (os === undefined) throw new Error(`Operating system [${currentOs}] is not supported`);
-        return this.#downloadUrl.replace('{{VERSION}}', versionToUse).replace('{{OS}}', os).replace('{{ARCH}}', arch);
+        return this.#downloadUrl
+            .replace('{{VERSION}}', versionToUse)
+            .replace('{{VERSION}}', versionToUse.startsWith('v') ? versionToUse.slice(1) : versionToUse)
+            .replace('{{OS}}', os)
+            .replace('{{ARCH}}', arch);
     }
 
     private async _resolveReleasesOfFirstPage() {
