@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-name: setup-protoc
+name: Setup Protocol Buffers compiler
 description: 🐻‍❄️🔥 GitHub action for setting up the Protocol Buffers compiler
 author: Noelware, LLC. <team@noelware.org>
 
