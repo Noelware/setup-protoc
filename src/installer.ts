@@ -21,10 +21,10 @@
  * SOFTWARE.
  */
 
-import { debug, info } from '@actions/core';
 import { HttpClient } from '@actions/http-client';
 import { rcompare } from 'semver';
 import { Inputs } from './input';
+import { debug } from '@actions/core';
 
 export class Installer {
     #downloadUrl =
@@ -50,9 +50,9 @@ export class Installer {
     async getVersion() {
         let versionToUse: string | undefined;
         if (this.#version === 'latest') {
-            versionToUse = (await this._resolveReleasesOfFirstPage()).at(0);
+            versionToUse = (await this.getFirstPage()).at(0);
         } else if (this.#version.endsWith('.x')) {
-            versionToUse = (await this._resolveReleasesOfFirstPage()).find((i) => i === this._normalize(this.#version));
+            versionToUse = (await this.getFirstPage()).find((i) => i === this._normalize(this.#version));
         } else {
             versionToUse = this.#version;
         }
@@ -119,7 +119,7 @@ export class Installer {
         return url;
     }
 
-    private async _resolveReleasesOfFirstPage() {
+    private async getFirstPage() {
         debug("Resolving versions of protocolbuffers/protoc's first page of releases...");
 
         // We are only going to iterate over the results on the first page,
