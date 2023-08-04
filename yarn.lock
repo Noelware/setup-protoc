@@ -31,7 +31,16 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@actions/http-client@npm:2.1.0, @actions/http-client@npm:^2.0.1":
+"@actions/http-client@npm:2.1.1":
+  version: 2.1.1
+  resolution: "@actions/http-client@npm:2.1.1"
+  dependencies:
+    tunnel: ^0.0.6
+  checksum: 5a3fd0407020a11cd3864b6c9ed8ef36912e08418df34fac675d15fc71543abb419db236ddb8fbd649f8ad8b5057bd78f1ac301f87283dfc706aa85578a90658
+  languageName: node
+  linkType: hard
+
+"@actions/http-client@npm:^2.0.1":
   version: 2.1.0
   resolution: "@actions/http-client@npm:2.1.0"
   dependencies:
@@ -431,7 +440,7 @@ __metadata:
   dependencies:
     "@actions/core": 1.10.0
     "@actions/exec": 1.1.1
-    "@actions/http-client": 2.1.0
+    "@actions/http-client": 2.1.1
     "@actions/tool-cache": 2.0.1
     "@augu/eslint-config": 4.0.1
     "@augu/tsconfig": 1.1.1
