@@ -8,7 +8,7 @@
     "author": "Noelware, LLC. <team@noelware.org>",
     "repository": "https://github.com/Noelware/setup-protoc",
     "bugs": "https://github.com/Noelware/setup-protoc/issues/new",
-    "packageManager": "yarn@3.7.0",
+    "packageManager": "yarn@4.0.2",
     "keywords": [
         "setup-protoc",
         "protobuf",
