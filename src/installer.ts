@@ -28,7 +28,7 @@ import { debug } from '@actions/core';
 import { lazy } from '@noelware/utils';
 
 const resolveDownloadUri = ({ version, os, arch }: Record<'version' | 'os' | 'arch', string>) =>
-    `https://github.com/protocolbuffers/protobuf/releases/download/${version}/protoc-${version}-${os}${arch}.zip`;
+    `https://github.com/protocolbuffers/protobuf/releases/download/${version}/protoc-${version.replace('v', '')}-${os}${arch}.zip`;
 
 const client = lazy(() => {
     const inputs = getInputs();
