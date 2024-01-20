@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-name: ESLint
+name: CI
 on:
     workflow_dispatch:
     push:
@@ -52,31 +52,24 @@ on:
 jobs:
     lint:
         runs-on: ubuntu-latest
-        strategy:
-            matrix:
-                node-version: [16.x, 19.x]
         steps:
             - name: Checkout the repository
-              uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4
+              uses: actions/checkout@v4
 
-            - name: Uses Node.js ${{matrix.node-version}}
-              uses: actions/setup-node@v4
-              with:
-                  node-version: ${{matrix.node-version}}
-
-            - name: Setup Yarn and node-modules cache
-              id: yarn-cache
-              uses: auguwu/node-pm-action@master
+            - name: Setup Bun
+              uses: oven-sh/setup-bun@v1
 
             - name: Install dependencies
-              if: steps.yarn-cache.outputs.cache-hit != 'true' || steps.yarn-cache.outputs.node-modules-cache-hit != 'true'
-              run: yarn install --immutable
+              run: bun install
+
+            - name: Check formatting
+              run: bun run fmt
 
             - name: Lint project with ESLint
-              run: yarn lint
+              run: bun run lint
 
             - name: Run all tests
-              run: yarn test
+              run: bun run test
 
             - name: Test action
               uses: ./
