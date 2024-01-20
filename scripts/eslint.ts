@@ -1,6 +1,6 @@
 /*
  * 🐻‍❄️🔥 setup-protoc: GitHub action for setting up the Protocol Buffers compiler
- * Copyright (c) 2023 Noelware, LLC. <team@noelware.org>
+ * Copyright (c) 2023-2024 Noelware, LLC. <team@noelware.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,75 +21,88 @@
  * SOFTWARE.
  */
 
-import { relative, resolve } from 'path';
-import { warning, error } from '@actions/core';
-import { Signale } from 'signale';
-import { ESLint } from 'eslint';
-import symbols from 'log-symbols';
+import { fileURLToPath } from 'node:url';
+import type { ESLint } from 'eslint';
+import { readFile } from 'node:fs/promises';
+import * as colors from 'colorette';
+import { resolve } from 'node:path';
+import { globby } from 'globby';
+import * as log from './util/logging';
 
-const log = new Signale({
-    scope: 'setup-protoc:eslint',
-    config: {
-        displayBadge: true,
-        displayScope: true,
-        displayTimestamp: true,
-        displayDate: true
-    }
-});
+export async function main() {
+    const ROOT = fileURLToPath(new URL('..', import.meta.url));
+    log.info(`root directory: ${ROOT}`);
 
-const dirs = [
-    {
-        globPattern: 'src/**/*.{ts,tsx}',
-        name: 'src'
-    },
-    {
-        globPattern: 'scripts/**/*.{ts,tsx}',
-        name: 'scripts'
-    },
-    {
-        globPattern: 'tests/**/*.{ts,tsx}',
-        name: 'tests'
-    }
-] as const;
+    const eslint = await import('eslint/use-at-your-own-risk');
 
-async function main() {
-    const eslint = new ESLint({
-        useEslintrc: true,
-
-        // if we aren't in ci, use the --fix flag to fix
-        // the issues
-        fix: process.env.CI === undefined
+    // @ts-ignore
+    const linter: ESLint = new eslint.default.FlatESLint({
+        allowInlineConfig: true,
+        fix: !log.ci,
+        cwd: ROOT
     });
 
-    for (const dir of dirs) {
-        log.info(`Running ESLint on directory ${dir.name}...`);
+    const formatter = await linter.loadFormatter('codeframe');
+    let hasFailed = false;
 
-        const results = await eslint.lintFiles(dir.globPattern);
-        for (const result of results) {
-            const path = relative(resolve(__dirname, '..', dir.name), result.filePath);
-            const hasErrors = result.errorCount > 0;
-            const hasWarnings = result.warningCount > 0;
-            const symbol = hasErrors ? symbols.error : hasWarnings ? symbols.warning : symbols.success;
+    log.startGroup(`linting directory [${resolve(ROOT)}]`);
+    for (const file of await globby('**/*.ts')) {
+        if (file.includes('node_modules') || file.includes('dist')) {
+            continue;
+        }
 
-            log.info(`${symbol}   src/${path}`);
-            for (const message of result.messages) {
-                const s = message.severity === 1 ? symbols.warning : symbols.error;
-                if (process.env.CI !== undefined) {
-                    const method = message.severity === 1 ? warning : error;
-                    method(`${s} ${message.message} (${message.ruleId})`, {
-                        endColumn: message.endColumn,
-                        endLine: message.endLine,
-                        file: result.filePath,
-                        startLine: message.line,
-                        startColumn: message.column
-                    });
-                } else {
-                    const method = message.severity === 1 ? log.warn : log.error;
-                    method(`    * ${s}   ${message.message} (${message.ruleId})`);
+        log.info(
+            `${colors.isColorSupported ? colors.bold(colors.magenta('START')) : 'START'}   ${resolve(ROOT, file)}`
+        );
+
+        const contents = await readFile(resolve(ROOT, file), 'utf-8');
+        const results: ESLint.LintResult[] = await linter.lintText(contents, {
+            filePath: resolve(ROOT, file)
+        });
+
+        if (!log.ci) {
+            const shouldPrint = await formatter.format(results);
+            shouldPrint.length > 0 && console.log(shouldPrint);
+        } else {
+            for (const result of results) {
+                for (const msg of result.messages) {
+                    switch (msg.severity) {
+                        case 0:
+                            continue;
+
+                        case 1:
+                            log.warn(
+                                `[${msg.ruleId || '(unknown rule)'}] ${msg.message} (line ${msg.line}:${msg.column})`
+                            );
+                            continue;
+
+                        case 2:
+                            hasFailed = true;
+                            log.error(
+                                `${
+                                    colors.isColorSupported ? colors.bold(colors.red('FAILED')) : 'FAILED'
+                                } file [${file}] has failed to lint properly; run \`bun run lint\` outside of CI to fix it: ${
+                                    msg.ruleId || '(unknown rule)'
+                                }: ${msg.message}`,
+                                {
+                                    startColumn: msg.endColumn,
+                                    endColumn: msg.endColumn,
+                                    startLine: msg.line,
+                                    endLine: msg.endLine,
+                                    title: `[${msg.ruleId || '(unknown)'}] ${msg.message}`,
+                                    file: file
+                                }
+                            );
+                    }
                 }
             }
         }
+
+        log.info(`${colors.isColorSupported ? colors.bold(colors.magenta('END')) : 'END'}     ${resolve(ROOT, file)}`);
     }
+
+    log.endGroup();
+    process.exit(hasFailed ? 1 : 0);
 }
 
 main().catch((ex) => {

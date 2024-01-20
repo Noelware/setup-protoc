@@ -9,7 +9,8 @@
         "strict": true,
         "noEmit": true,
         "allowSyntheticDefaultImports": true,
-        "rootDir": "."
+        "rootDir": ".",
+        "types": ["node", "bun"]
     },
     "include": ["**/*.ts"],
     "exclude": ["node_modules"]

@@ -21,45 +21,39 @@
  * SOFTWARE.
  */
 
-import { addPath, endGroup, info, startGroup, setOutput } from '@actions/core';
-import { downloadTool, find, extractZip, cacheDir } from '@actions/tool-cache';
-import { getExecOutput } from '@actions/exec';
-import * as installer from './installer';
-import { getInputs } from './input';
+import { fileURLToPath } from 'url';
 
-async function main() {
-    const inputs = getInputs();
-    const version = await installer.getVersion();
-    const downloadUrl = await installer.resolveDownloadUrl();
+// Node (`ESLINT_FLAT_CONFIG=1 npx eslint`):
+//      > import('@augu/eslint-config'):
+//      [Module: null prototype] {
+//        default: {
+//          default: [Getter],
+//          javascript: [Getter],
+//          perfectionist: [Getter],
+//          typescript: [Getter],
+//          vue: [Getter]
+//        },
+//        javascript: [Function: javascript],
+//        perfectionist: [AsyncFunction: perfectionist],
+//        typescript: [AsyncFunction: typescript],
+//        vue: [AsyncFunction: vue]
+//      }
+//
+// Bun:
+//     > bun run lint
+//     Module {
+//       default: [Function: noel],
+//       javascript: [Function: javascript],
+//       perfectionist: [Function: perfectionist],
+//       typescript: [Function: typescript],
+//       vue: [Function: vue],
+//     }
+const noel = await import('@augu/eslint-config').then((mod) =>
+    typeof Bun !== 'undefined' ? mod.default : mod.default.default
+);
 
-    let toolPath = find('protoc', version!);
-    if (!toolPath) {
-        startGroup('installing protoc...');
-        {
-            info(`Using download URL ${downloadUrl}`);
-            const path = await downloadTool(downloadUrl, undefined, inputs.token).then((path) => extractZip(path));
-
-            toolPath = await cacheDir(path, 'protoc', version!);
-        }
-
-        endGroup();
-    } else {
-        info(`Found cached protoc toolchain in directory [${toolPath}]`);
+export default noel({
+    typescript: {
+        tsconfig: fileURLToPath(new URL('.', import.meta.url))
     }
-
-    setOutput('binary', `${toolPath}/bin/protoc`);
-    addPath(`${toolPath}/bin`);
-
-    startGroup('Environment');
-    {
-        const { stdout } = await getExecOutput('protoc', ['--version']);
-        info(stdout);
-    }
-
-    endGroup();
-}
-
-main().catch((ex) => {
-    console.error(ex);
-    process.exit(1);
 });

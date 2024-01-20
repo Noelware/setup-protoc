@@ -1,6 +1,6 @@
 /*
  * 🐻‍❄️🔥 setup-protoc: GitHub action for setting up the Protocol Buffers compiler
- * Copyright (c) 2023 Noelware, LLC. <team@noelware.org>
+ * Copyright (c) 2023-2024 Noelware, LLC. <team@noelware.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -21,21 +21,11 @@
  * SOFTWARE.
  */
 
-import { mkdir, writeFile } from 'fs/promises';
-import { Signale } from 'signale';
-import { resolve } from 'path';
-import rimraf from 'rimraf';
+import { mkdir, writeFile } from 'node:fs/promises';
+import * as log from './util/logging';
+import { resolve } from 'node:path';
+import { rimraf } from 'rimraf';
 import ncc from '@vercel/ncc';
-
-const log = new Signale({
-    scope: 'setup-protoc:build',
-    config: {
-        displayBadge: true,
-        displayScope: true,
-        displayTimestamp: true,
-        displayDate: true
-    }
-});
 
 const top = [
     '/* eslint-ignore */',
@@ -43,7 +33,7 @@ const top = [
     '',
     '/*',
     ' * 🐻‍❄️🔥 setup-protoc: GitHub action for setting up the Protocol Buffers compiler',
-    ' * Copyright (c) 2023 Noelware, LLC. <team@noelware.org>',
+    ' * Copyright (c) 2023-2024 Noelware, LLC. <team@noelware.org>',
     ' *',
     ' * Permission is hereby granted, free of charge, to any person obtaining a copy',
     ' * of this software and associated documentation files (the "Software"), to deal',
@@ -67,13 +57,14 @@ const top = [
 ].join('\n');
 
 async function main() {
+    log.startGroup('building `@noelware/setup-protoc`...');
     await rimraf(resolve(process.cwd(), 'build'));
 
-    log.info('Building @noelware/setup-protoc...');
+    log.info('Building...');
     const result = await ncc(resolve(process.cwd(), 'src/index.ts'), {
+        license: 'LICENSE',
         minify: true,
-        cache: false,
-        license: 'LICENSE'
+        cache: false
     });
 
     const took = result.stats.compilation.endTime - result.stats.compilation.startTime;
@@ -85,6 +76,8 @@ async function main() {
     for (const [file, { source }] of Object.entries(result.assets)) {
         await writeFile(resolve(process.cwd(), 'build', file), source);
     }
+
+    log.endGroup();
 }
 
 main().catch((ex) => {

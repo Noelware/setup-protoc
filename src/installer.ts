@@ -1,6 +1,6 @@
 /*
  * 🐻‍❄️🔥 setup-protoc: GitHub action for setting up the Protocol Buffers compiler
- * Copyright (c) 2023 Noelware, LLC. <team@noelware.org>
+ * Copyright (c) 2023-2024 Noelware, LLC. <team@noelware.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -22,134 +22,123 @@
  */
 
 import { HttpClient } from '@actions/http-client';
+import { getInputs } from './input';
 import { rcompare } from 'semver';
-import { Inputs } from './input';
 import { debug } from '@actions/core';
+import { lazy } from '@noelware/utils';
 
-export class Installer {
-    #downloadUrl =
-        'https://github.com/protocolbuffers/protobuf/releases/download/{{VERSION}}/protoc-{{VERSION}}-{{OS}}{{ARCH}}.zip';
+const resolveDownloadUri = ({ version, os, arch }: Record<'version' | 'os' | 'arch', string>) =>
+    `https://github.com/protocolbuffers/protobuf/releases/download/${version}/protoc-${version}-${os}${arch}.zip`;
 
-    #includePrereleases?: boolean;
-    #version: string;
-    httpClient: HttpClient;
+const client = lazy(() => {
+    const inputs = getInputs();
+    return new HttpClient('Noelware/setup-protoc (https://github.com/Noelware/setup-protoc)', undefined, {
+        headers: inputs.token !== undefined ? { Authorization: `Bearer ${inputs.token}` } : undefined
+    });
+});
 
-    constructor({ version, token, includePrereleases }: Inputs) {
-        this.httpClient = new HttpClient(
-            'Noelware/setup-protoc (+https://github.com/Noelware/setup-protoc)',
-            undefined,
-            {
-                headers: token !== undefined ? { Authorization: `Bearer ${token}` } : {}
+export async function getVersion() {
+    const { version } = getInputs();
+
+    let versionToUse: string | undefined;
+    if (version === 'latest') {
+        const page1 = await queryProtocReleases();
+        versionToUse = page1.at(0);
+    } else if (version.endsWith('.x')) {
+        let cursor = 0;
+        let pages: any[];
+
+        while ((pages = await queryProtocReleases(cursor))) {
+            if (pages.find((s) => s.version === normalizeVersion(version))) {
+                versionToUse = pages.find((s) => s.version === normalizeVersion(version));
+                break;
             }
-        );
 
-        this.#includePrereleases = includePrereleases;
-        this.#version = version;
+            cursor++;
+        }
+    } else {
+        versionToUse = version;
     }
 
-    async getVersion() {
-        let versionToUse: string | undefined;
-        if (this.#version === 'latest') {
-            versionToUse = (await this.getFirstPage()).at(0);
-        } else if (this.#version.endsWith('.x')) {
-            versionToUse = (await this.getFirstPage()).find((i) => i === this._normalize(this.#version));
-        } else {
-            versionToUse = this.#version;
-        }
+    return versionToUse;
+}
 
-        if (versionToUse === undefined) {
-            throw new Error(`Unable to resolve ${this.#version} into a valid version!`);
-        }
-
-        return versionToUse;
+export async function resolveDownloadUrl() {
+    const version = await getVersion();
+    if (version === undefined) {
+        throw new Error('Was unable to resolve version from `version` action input');
     }
 
-    async resolveDownloadUrl() {
-        const versionToUse = await this.getVersion();
-        let os: string | undefined = undefined,
-            arch: string | undefined = undefined;
+    let os: string | undefined = undefined,
+        arch: string | undefined = undefined;
 
-        const currentOs = process.platform;
-        const currentArch = process.arch;
+    const currentOs = process.platform;
+    const currentArch = process.arch;
 
-        switch (currentArch) {
-            case 'arm64':
-                arch = 'aarch_64';
-                break;
-            case 'ppc64':
-                arch = 'ppcle_64';
-                break;
-            case 's390':
-            case 's390x':
-                arch = 's390_64';
-                break;
-            case 'x64':
-                arch = 'x86_64';
-                break;
-            case 'ia32':
-                arch = 'x86_32';
-                break;
-        }
-
-        if (arch === undefined) throw new Error(`Architecture [${currentArch}] is not supported`);
-        switch (currentOs) {
-            case 'linux':
-                os = 'linux';
-                break;
-            case 'darwin':
-                os = 'osx';
-                break;
-            case 'win32':
-                os = arch === 'x86_32' ? 'win32' : 'win64';
-                break;
-        }
-
-        if (os === undefined) throw new Error(`Operating system [${currentOs}] is not supported`);
-        let url = this.#downloadUrl
-            .replace('{{VERSION}}', versionToUse)
-            .replace('{{VERSION}}', versionToUse.startsWith('v') ? versionToUse.slice(1) : versionToUse)
-            .replace('{{OS}}', os);
-
-        if (!os.startsWith('win')) {
-            url = url.replace('{{ARCH}}', `-${arch}`);
-        } else {
-            url = url.replace('{{ARCH}}', '');
-        }
-
-        return url;
+    switch (currentArch) {
+        case 'arm64':
+            arch = 'aarch_64';
+            break;
+        case 'ppc64':
+            arch = 'ppcle_64';
+            break;
+        case 's390':
+        case 's390x':
+            arch = 's390_64';
+            break;
+        case 'x64':
+            arch = 'x86_64';
+            break;
+        case 'ia32':
+            arch = 'x86_32';
+            break;
     }
 
-    private async getFirstPage() {
-        debug("Resolving versions of protocolbuffers/protoc's first page of releases...");
-
-        // We are only going to iterate over the results on the first page,
-        // since the latest release will be always be the first one
-        const result = await this.httpClient
-            .getJson<Record<string, any>[]>(`https://api.github.com/repos/protocolbuffers/protobuf/releases`)
-            .then((r) => r.result);
-
-        return (result ?? [])
-            .filter((tag) => tag.tag_name.match(/v\d+\.[\w\.]+/g))
-            .filter((tag) => (this.#includePrereleases === true ? true : tag.prerelease === false))
-            .map((tag) => tag.tag_name)
-            .sort((a, b) => rcompare(this._normalize(a), this._normalize(b)));
+    if (arch === undefined) throw new Error(`Architecture [${currentArch}] is not supported`);
+    switch (currentOs) {
+        case 'linux':
+            os = 'linux';
+            break;
+        case 'darwin':
+            os = 'osx';
+            break;
+        case 'win32':
+            os = arch === 'x86_32' ? 'win32' : 'win64';
+            break;
     }
 
-    private _normalize(version: string) {
-        const parts = version.split('.');
+    if (os === undefined) throw new Error(`Operating system [${currentOs}] is not supported`);
+    return resolveDownloadUri({ version, os, arch: !os.startsWith('win') ? `-${arch}` : '' });
+}
 
-        // resolve 2 -> 2.0.0
-        if (parts.length === 1) return `${parts[0]}.0.0`;
+async function queryProtocReleases(page = 0) {
+    debug(`resolving versions from [protocolbuffers/protoc]      {page=${page}}`);
+    const inputs = getInputs();
 
-        // resolve 2.1 -> 2.1.0
-        if (parts.length === 2) return `${parts[0]}.${parts[1]}.0`;
+    const http = client.get();
+    const result = await http
+        .getJson<
+            any[]
+        >(`https://api.github.com/repos/protocolbuffers/protobuf/releases?page=${page === 0 ? 1 : page++}`)
+        .then((r) => r.result ?? []);
 
-        // Resolve pre-releases
-        if (this.#includePrereleases === true && ['beta', 'preview', 'rc'].some((i) => parts[2] === i)) {
-            parts[2] = parts[2].replace('beta', '-beta').replace('rc', '-rc').replace('preview', '-preview');
-            return parts.join('.');
-        }
+    return result
+        .filter((tag) => tag.tag_name.match(/v\d+\.[\w\.]+/g))
+        .filter((tag) => (inputs.includePrereleases ? true : tag.prerelease === false))
+        .map((tag) => tag.tag_name)
+        .sort((a, b) => rcompare(normalizeVersion(a), normalizeVersion(b)));
+}
 
-        return version;
+function normalizeVersion(v1: string) {
+    const parts = v1.split('.');
+    if (parts.length === 1) return `${parts[0]}.0.0`;
+    if (parts.length === 2) return `${parts[0]}.${parts[1]}.0`;
+
+    const inputs = getInputs();
+    if (inputs.includePrereleases && ['beta', 'preview', 'rc'].some((i) => parts[2] === i)) {
+        parts[2] = parts[2].replace('beta', '-beta').replace('rc', '-rc').replace('preview', '-preview');
+        return parts.join('.');
     }
+
+    return v1;
 }
