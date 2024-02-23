@@ -33,7 +33,7 @@
         "@augu/tsconfig": "1.2.0",
         "@types/bun": "1.0.6",
         "@types/eslint": "8.56.3",
-        "@types/node": "20.11.19",
+        "@types/node": "20.11.20",
         "@types/prettier": "3.0.0",
         "@types/semver": "7.5.7",
         "@typescript-eslint/eslint-plugin": "7.0.2",
