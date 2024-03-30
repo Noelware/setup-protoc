@@ -31,7 +31,7 @@
     "devDependencies": {
         "@augu/eslint-config": "5.1.2",
         "@augu/tsconfig": "1.2.0",
-        "@types/bun": "1.0.11",
+        "@types/bun": "1.0.12",
         "@types/eslint": "8.56.6",
         "@types/node": "20.12.2",
         "@types/prettier": "3.0.0",
