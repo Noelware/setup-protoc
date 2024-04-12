@@ -32,7 +32,7 @@
         "@augu/eslint-config": "5.1.2",
         "@augu/tsconfig": "1.2.0",
         "@types/bun": "1.0.12",
-        "@types/eslint": "8.56.8",
+        "@types/eslint": "8.56.9",
         "@types/node": "20.12.7",
         "@types/prettier": "3.0.0",
         "@types/semver": "7.5.8",
