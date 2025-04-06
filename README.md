@@ -1,3 +1,6 @@
+# WARNING
+This action is now deprecated and shouldn't be used anymore.
+
 # 🐻‍❄️🔥 setup-protoc
 
 > _GitHub action for setting up the Protocol Buffers compiler_
